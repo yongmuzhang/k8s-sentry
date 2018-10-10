@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: sentry-cron
+  name: sentry-cron
+#  namespace: local
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentry-cron
+    spec:
+      containers:
+      - name: sentry-cron
+        image: "sentry:8.20"
+        imagePullPolicy: IfNotPresent
+        args: ["run", "cron"]
+        ports:
+          - containerPort: 9000
+        env:
+          - name: SENTRY_SECRET_KEY
+            value: "92jksjhd78238jsd78r732h7290"
+          - name: SENTRY_POSTGRES_HOST
+            value: sentry-postgresql
+          - name: SENTRY_POSTGRES_PORT
+            value: "5432"
+          - name: SENTRY_DB_USER
+            value: "sentry"
+          - name: SENTRY_DB_NAME
+            value: "sentry"
+          - name: SENTRY_DB_PASSWORD
+            value: "ymzndl33SNwdm"
+          - name: SENTRY_REDIS_HOST
+            value: sentry-redis
+          - name: SENTRY_REDIS_PASSWORD
+            value: "L9Ut7625E0dDdgf"
+          - name: SENTRY_REDIS_PORT
+            value: "6379"
+        volumeMounts:
+          - name: sentry-data
+            mountPath: /var/lib/sentry/files
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+      volumes:
+        - name: sentry-data
+          emptyDir: {}

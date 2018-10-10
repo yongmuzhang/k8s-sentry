@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentry-web
+#  namespace: local
+spec:
+  type: ClusterIP
+  ports:
+  - name: sentry-web-port
+    port: 80
+    targetPort: 9000
+    protocol: TCP
+  selector:
+    app: sentry-web
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: sentry-web
+  name: sentry-web
+#  namespace: local
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentry-web
+    spec:
+      containers:
+      - name: sentry-web
+        image: "sentry:8.20"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 9000
+          protocol: TCP
+        env:
+          - name: SENTRY_SECRET_KEY
+            value: "92jksjhd78238jsd78r732h7290"
+          - name: SENTRY_POSTGRES_HOST
+            value: sentry-postgresql
+          - name: SENTRY_POSTGRES_PORT
+            value: "5432"
+          - name: SENTRY_DB_USER
+            value: "sentry"
+          - name: SENTRY_DB_NAME
+            value: "sentry"
+          - name: SENTRY_DB_PASSWORD
+            value: "ymzndl33SNwdm"
+          - name: SENTRY_REDIS_HOST
+            value: sentry-redis
+          - name: SENTRY_REDIS_PASSWORD
+            value: "L9Ut7625E0dDdgf"
+          - name: SENTRY_REDIS_PORT
+            value: "6379"
+          - name: GITHUB_APP_ID
+            value: ""
+          - name: GITHUB_API_SECRET
+            value: ""
+        volumeMounts:
+        - name: sentry-data
+          mountPath: /var/lib/sentry/files
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /_health/
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 50
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        readinessProbe:
+          failureThreshold: 10
+          httpGet:
+            path: /_health/
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 50
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 300m
+            memory: 300Mi
+      volumes:
+        - name: sentry-data
+          emptyDir: {}
